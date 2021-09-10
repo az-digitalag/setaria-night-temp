@@ -31,8 +31,8 @@ trans_diff <- read.csv(paste0("/data/output/pecan_runs/temp_comp_results/compari
 
 # Calculate when one-sided (.05) or two-sided (.025) t-test is significant
 # Assumes that the difference is positive
-biomass_diff$sig_05 <- ifelse(biomass_diff$p05 > 0, TRUE, FALSE)
-biomass_diff$sig_025 <- ifelse(biomass_diff$p025 > 0, TRUE, FALSE)
+biomass_diff$sig_05 <- ifelse(biomass_diff$p095 < 0, TRUE, FALSE)
+biomass_diff$sig_025 <- ifelse(biomass_diff$p975 < 0, TRUE, FALSE)
 
 trans_diff$sig_05 <- ifelse(trans_diff$p05 > 0, TRUE, FALSE)
 trans_diff$sig_025 <- ifelse(trans_diff$p025 > 0, TRUE, FALSE)
