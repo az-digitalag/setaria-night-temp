@@ -5,7 +5,7 @@
   <genus>Setaria</genus>
  </type>
  <canopyControl>
-  <Sp>1.7</Sp>
+  <Sp>4.5</Sp>
   <SpD>0</SpD>
   <nlayers>10</nlayers>
   <kd>0.1</kd>
