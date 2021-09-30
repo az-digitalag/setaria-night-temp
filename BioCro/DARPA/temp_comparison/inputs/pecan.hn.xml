@@ -18,7 +18,7 @@
 
   <pfts>
     <pft>
-      <name>SetariaWT_ME034</name>
+      <name>SetariaWT_ME034_chamber</name>
       <outdir>/data/output/pecan_runs/temp_comp_results/hn/pft/SetariaWT_ME034</outdir>
       <constants>
         <file>~/model-vignettes/BioCro/DARPA/temp_comparison/inputs/setaria.constants.xml</file>
