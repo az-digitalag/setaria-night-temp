@@ -8,7 +8,7 @@
   <Sp>4.5</Sp>
   <SpD>0</SpD>
   <nlayers>10</nlayers>
-  <kd>0.1</kd>
+  <kd>0.47</kd>
   <chi.l>1</chi.l>
   <mResp>0.02,0.03</mResp>
   <heightFactor>3</heightFactor>
