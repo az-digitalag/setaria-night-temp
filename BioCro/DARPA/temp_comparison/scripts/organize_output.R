@@ -158,7 +158,8 @@ for(v in variables) {
   for(trt in treatments) {
     load(paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
                 "/sensitivity.results.NOENSEMBLEID.", v, ".2019.2019.Rdata"))
-    v_df1 <- sensitivity.results[["SetariaWT_ME034"]]$variance.decomposition.output
+    pft <- names(sensitivity.results)
+    v_df1 <- sensitivity.results[[pft]]$variance.decomposition.output
     v_df2 <- data.frame(trait = names(v_df1$coef.vars), data.frame(v_df1))
     v_df3 <- v_df2 %>% 
       mutate(trait.labels = factor(as.character(PEcAn.utils::trait.lookup(trait)$figid)),
