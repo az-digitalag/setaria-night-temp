@@ -52,7 +52,7 @@ vdecomp.b <- ggplot(data = vd) +
         axis.text.y=element_blank(), 
         legend.position = c(0.8, 0.5))
 
-jpeg(filename = "../plots/biomass_vd.jpg", height = 5, width = 7, units = "in", res = 600)
+jpeg(filename = "../plots/biomass_vd.jpg", height = 5, width = 8, units = "in", res = 600)
 cowplot::plot_grid(cv.b, el.b, vdecomp.b, nrow = 1, rel_widths = c(1.5, 1, 1))
 dev.off()
 
@@ -101,6 +101,6 @@ vdecomp.t <- ggplot(data = vd) +
         axis.text.y=element_blank(), 
         legend.position = c(0.8, 0.5))
 
-jpeg(filename = "../plots/trans_vd.jpg", height = 5, width = 7, units = "in", res = 600)
+jpeg(filename = "../plots/trans_vd.jpg", height = 5, width = 8, units = "in", res = 600)
 cowplot::plot_grid(cv.t, el.t, vdecomp.t, nrow = 1, rel_widths = c(1.5, 1, 1))
 dev.off()
