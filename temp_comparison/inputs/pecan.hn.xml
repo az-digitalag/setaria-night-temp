@@ -1,6 +1,6 @@
 <pecan>
 
-  <outdir>/data/output/pecan_runs/temp_comp_results/hn</outdir>
+  <outdir>/data/output/pecan_runs/temp_comp_ms/hn</outdir>
 
   <database>
     <bety>
@@ -12,25 +12,32 @@
       <write>FALSE</write>
     </bety>
 
-    <dbfiles>/data/output/pecan_runs/temp_comp_results/hn/dbfiles</dbfiles>
+    <dbfiles>/data/output/pecan_runs/temp_comp_ms/hn/dbfiles</dbfiles>
 
   </database>
 
   <pfts>
     <pft>
       <name>SetariaWT_ME034_chamber</name>
-      <outdir>/data/output/pecan_runs/temp_comp_results/hn/pft/SetariaWT_ME034</outdir>
+      <outdir>/data/output/pecan_runs/temp_comp_ms/hn/pft/SetariaWT_ME034</outdir>
       <constants>
-        <file>~/model-vignettes/BioCro/DARPA/temp_comparison/inputs/setaria.constants.xml</file>
+        <file>~/setaria-night-temp/temp_comparison/inputs/setaria.constants.xml</file>
       </constants>
     </pft>
   </pfts>
 
   <ensemble>
-    <size>1000</size>
+    <size>100</size>
+    <variable>GPP</variable>
+    <variable>NPP</variable>
+    <variable>AutoResp</variable>
     <variable>TotLivBiom</variable>
-    <variable>TVeg</variable>
     <variable>AGB</variable>
+    <variable>LAI</variable>
+    <variable>stomatal_conductance</variable>
+    <variable>Evap</variable>
+    <variable>TVeg</variable>
+    <variable>Transp</variable>
     <samplingspace>
       <parameters>
         <method>halton</method>
@@ -47,7 +54,6 @@
   </meta.analysis>
 
   <sensitivity.analysis>
-    <variable>TotLivBiom</variable>
     <variable>TVeg</variable>
     <variable>AGB</variable>
   </sensitivity.analysis>
@@ -65,7 +71,7 @@
     <inputs>
       <met>
         <output>BIOCRO</output>
-        <path>~/model-vignettes/BioCro/DARPA/temp_comparison/inputs/weather.hn</path>
+        <path>~/setaria-night-temp/temp_comparison/inputs/weather.hn</path>
       </met>
     </inputs>
       <start.date>2019/01/01</start.date>

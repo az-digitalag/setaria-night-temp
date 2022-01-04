@@ -1,6 +1,6 @@
 <pecan>
 
-  <outdir>/data/output/pecan_runs/temp_comp_ms/rn</outdir>
+  <outdir>/data/output/pecan_runs/temp_comp_ms/hnrn</outdir>
 
   <database>
     <bety>
@@ -12,14 +12,14 @@
       <write>FALSE</write>
     </bety>
 
-    <dbfiles>/data/output/pecan_runs/temp_comp_ms/rn/dbfiles</dbfiles>
+    <dbfiles>/data/output/pecan_runs/temp_comp_ms/hnrn/dbfiles</dbfiles>
 
   </database>
 
   <pfts>
     <pft>
       <name>SetariaWT_ME034_chamber</name>
-      <outdir>/data/output/pecan_runs/temp_comp_ms/rn/pft/SetariaWT_ME034</outdir>
+      <outdir>/data/output/pecan_runs/temp_comp_ms/hnrn/pft/SetariaWT_ME034</outdir>
       <constants>
         <file>~/setaria-night-temp/temp_comparison/inputs/setaria.constants.xml</file>
       </constants>
@@ -49,7 +49,7 @@
     <iter>30000</iter>
     <random.effects>TRUE</random.effects>
     <threshold>1.2</threshold>
-    <update>TRUE</update>
+    <update>FALSE</update>
     <treatment>regular night temperature</treatment>
   </meta.analysis>
 
@@ -71,7 +71,7 @@
     <inputs>
       <met>
         <output>BIOCRO</output>
-        <path>~/setaria-night-temp/temp_comparison/inputs/weather.rn</path>
+        <path>~/setaria-night-temp/temp_comparison/inputs/weather.hn</path>
       </met>
     </inputs>
       <start.date>2019/01/01</start.date>
