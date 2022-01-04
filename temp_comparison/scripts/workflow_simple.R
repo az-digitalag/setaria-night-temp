@@ -23,7 +23,7 @@ source("source/plot_MA.R")
 # ----------------------------------------------------------------------
 # PEcAn Workflow
 # ----------------------------------------------------------------------
-treatments <- c("rn", "hn")
+treatments <- c("rn", "hn", "hnrn")
 for(trt in treatments){
   
   # Open, read in, and modify settings file for PEcAn run
