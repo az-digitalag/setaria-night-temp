@@ -6,17 +6,35 @@ library(udunits2)
 library(dplyr)
 library(tidyr)
 
-# Summarize (mn, md, sd, CI_50, and CI_95) across ensembles for all 3 treatments and 2 variables
+# Summarize (mn, md, sd, CI_50, and CI_95) across ensembles for all 3 treatments
+# And 9 variables
+# 3 C fluxes (GPP, NPP, AutoResp) [kg C m^-2 s^-1]
+# 3 C pools (TotLivBiom, AGB, LAI) [kg C m^-2 or m^2 m^-2]
+# 3 energy/water fluxes (stomatal_conductance, Evap, Transp) [kg m^-2 s^-1]
+# (Is Transp == TVeg?)
 
-treatments <- c("rn", "hn")
-variables <- c("TotLivBiom", "TVeg", "AGB")
+treatments <- c("rn", "hn", "hnrn")
+
+# Separate lists of ensembles variables vs. sensitivity variables
+ens.variables <- c("GPP", "NPP", "AutoResp",
+                   "TotLivBiom", "AGB", "LAI", 
+                   "stomatal_conductance", "Evap", "Transp")
+sens.variables <- c("AGB", "TVeg")
 
 # Functions for conversion of biomass and transpiration units
 convert_units <- function(x, variable) {
-  if (variable %in% c("TotLivBiom", "AGB")) {
+  if (variable %in% c("GPP", "NPP", "AutoResp")) {
+    # Convert to kg/m2/h
+    return(ud.convert(x, "kg/m2/s", "kg/m2/h"))
+  } else if (variable %in% c("TotLivBiom", 
+                             "AGB")) {
     # undo  biomass to C conversion in PEcAn, already converted to kg/m2
     return(x / 0.4)
-  } else if (variable == "TVeg") {
+  } else if (variable %in% c("stomatal_conductance", 
+                             "Evap", 
+                             "TVeg",
+                             "Transp")) {
+    # Convert to kg/m2/h
     return(ud.convert(x, "kg/m2/s", "kg/m2/h"))
   }
 }
@@ -24,19 +42,19 @@ convert_units <- function(x, variable) {
 for(trt in treatments){
   
   # Load in daily summary of median biocro output, to obtain correct timestamps
-  load(paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
+  load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
               "/out/SA-median/biocro_output.RData"))
   timescale <- data.frame(day = rep(biocro_result$doy, each = 24), hour = 0:23)
   rm(biocro_result)
   
-  for(v in variables){
+  for(v in ens.variables){
     
     # Load in wide format of ensemble outputs
-    load(paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
+    load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                 "/ensemble.ts.NOENSEMBLEID.", v, ".2019.2019.Rdata"))
     
     # Rearrange to long format and summarize across ensembles
-    if (v %in% c("TotLivBiom", "AGB")) { # Take midday values only
+    if (v %in% c("TotLivBiom", "AGB", "LAI")) { # Pools, take midday values only
       daily <- data.frame(timescale, t(ensemble.ts[[v]])) %>% 
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                      names_prefix = "X", values_to = "output") %>% 
@@ -50,7 +68,8 @@ for(trt in treatments){
                   ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
                   lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
                   ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
-    } else if (v == "TVeg") { # Take daily sums first
+    } else if (v %in% c("GPP", "NPP", "AutoResp", 
+                        "stomatal_conductance", "Evap", "Transp")) { # Fluxes, take daily sums first
       daily <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                      names_prefix = "X", values_to = "output") %>%
@@ -69,7 +88,7 @@ for(trt in treatments){
     }
     
     write.csv(daily, 
-              paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
+              paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                      "/ensemble_ts_summary_", v, ".csv"),
               row.names = F)
     rm(ensemble.ts)
@@ -79,15 +98,15 @@ for(trt in treatments){
 
 # Summarize pair-wise differences across treatments, by ensemble
 
-for(v in variables){
+for(v in ens.variables){
   
   # Load in daily summary of median biocro output, to obtain correct timestamps
-  load(paste0("/data/output/pecan_runs/temp_comp_results/rn/out/SA-median/biocro_output.RData"))
+  load(paste0("/data/output/pecan_runs/temp_comp_ms/rn/out/SA-median/biocro_output.RData"))
   timescale <- data.frame(day = rep(biocro_result$doy, each = 24), hour = 0:23)
   rm(biocro_result)
   
   # Load all 3 treatments, summarize to daily depending on variable
-  load(paste0("/data/output/pecan_runs/temp_comp_results/rn/ensemble.ts.NOENSEMBLEID.", 
+  load(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble.ts.NOENSEMBLEID.", 
               v, ".2019.2019.Rdata"))
   if (v %in% c("TotLivBiom", "AGB")) {
     rn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
@@ -109,7 +128,7 @@ for(v in variables){
   }
   rm(ensemble.ts)
   
-  load(paste0("/data/output/pecan_runs/temp_comp_results/hn/ensemble.ts.NOENSEMBLEID.", 
+  load(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble.ts.NOENSEMBLEID.", 
               v, ".2019.2019.Rdata"))
   if (v %in% c("TotLivBiom", "AGB")) {
     hn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
@@ -147,16 +166,16 @@ for(v in variables){
     relocate(day, percentile)
   
   write.csv(diff_stat, 
-            paste0("/data/output/pecan_runs/temp_comp_results/comparison_diff_", v, ".csv"),
+            paste0("/data/output/pecan_runs/temp_comp_ms/comparison_diff_", v, ".csv"),
             row.names = F)
 }
 
 # Collate variance decomposition variables across treatments
 
-for(v in variables) {
+for(v in sens.variables) {
   vd <- c()
   for(trt in treatments) {
-    load(paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
+    load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                 "/sensitivity.results.NOENSEMBLEID.", v, ".2019.2019.Rdata"))
     pft <- names(sensitivity.results)
     v_df1 <- sensitivity.results[[pft]]$variance.decomposition.output
@@ -174,6 +193,6 @@ for(v in variables) {
     vd <- rbind.data.frame(vd, v_df3)
     
   }
-  save(vd, file = paste0("/data/output/pecan_runs/temp_comp_results/var_decomp_", v, ".Rdata"))
+  save(vd, file = paste0("/data/output/pecan_runs/temp_comp_ms/var_decomp_", v, ".Rdata"))
 }
 
