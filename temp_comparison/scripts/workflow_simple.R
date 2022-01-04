@@ -17,9 +17,9 @@ library(PEcAn.BIOCRO)
 library(PEcAn.all)
 
 # Add function for setting MA treatments
-source("~/model-vignettes/BioCro/DARPA/set_MA_trt.R")
+source("source/set_MA_trt.R")
 # Add function for plotting MA by treatment and trait
-source("~/model-vignettes/BioCro/DARPA/plot_MA.R")
+source("source/plot_MA.R")
 # ----------------------------------------------------------------------
 # PEcAn Workflow
 # ----------------------------------------------------------------------
@@ -27,7 +27,7 @@ treatments <- c("rn", "hn")
 for(trt in treatments){
   
   # Open, read in, and modify settings file for PEcAn run
-  settings_file <- normalizePath(paste0("../inputs/pecan.", trt, ".xml"))
+  settings_file <- normalizePath(paste0("temp_comparison/inputs/pecan.", trt, ".xml"))
   settings <- PEcAn.settings::read.settings(settings_file) 
   settings <- PEcAn.settings::prepare.settings(settings, force = FALSE)
   PEcAn.settings::write.settings(settings, outputfile = paste0("pecan.CHECKED.", trt, ".xml"))
