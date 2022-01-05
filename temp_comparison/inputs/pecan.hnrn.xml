@@ -34,9 +34,7 @@
     <variable>TotLivBiom</variable>
     <variable>AGB</variable>
     <variable>LAI</variable>
-    <variable>stomatal_conductance</variable>
     <variable>Evap</variable>
-    <variable>TVeg</variable>
     <variable>Transp</variable>
     <samplingspace>
       <parameters>
@@ -54,8 +52,14 @@
   </meta.analysis>
 
   <sensitivity.analysis>
-    <variable>TVeg</variable>
+    <variable>GPP</variable>
+    <variable>NPP</variable>
+    <variable>AutoResp</variable>
+    <variable>TotLivBiom</variable>
     <variable>AGB</variable>
+    <variable>LAI</variable>
+    <variable>Evap</variable>
+    <variable>Transp</variable>
   </sensitivity.analysis>
 
   <model>
