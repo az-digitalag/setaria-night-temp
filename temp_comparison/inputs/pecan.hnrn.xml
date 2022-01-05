@@ -12,7 +12,7 @@
       <write>FALSE</write>
     </bety>
 
-    <dbfiles>/data/output/pecan_runs/temp_comp_ms/hnrn/dbfiles</dbfiles>
+    <dbfiles>/data/output/dbfiles</dbfiles>
 
   </database>
 
