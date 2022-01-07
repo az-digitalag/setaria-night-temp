@@ -93,6 +93,99 @@ for(trt in treatments){
   }
 }
 
+# Calculate additional derived variables
+# CUE = NPP/GPP
+# WUE = NPP/Transp
+# TET = Transp/Evap
+
+dvars <- c("CUE", "WUE", "TET")
+
+for(trt in treatments){
+  
+  # Load in daily summary of median biocro output, to obtain correct timestamps
+  load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+              "/out/SA-median/biocro_output.RData"))
+  timescale <- data.frame(day = rep(biocro_result$doy, each = 24), hour = 0:23)
+  rm(biocro_result)
+  
+  for(d in dvars){
+    if (d == "CUE")) {
+    # Load in wide format of ensemble outputs
+      load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                "/ensemble.ts.NOENSEMBLEID.NPP.2019.2019.Rdata"))
+      npp <- ensemble.ts
+      
+      load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                  "/ensemble.ts.NOENSEMBLEID.GPP.2019.2019.Rdata"))
+      gpp <- ensemble.ts
+      
+      cue <- data.frame(timescale, t(npp[["NPP"]]/gpp[["GPP"]]))%>% 
+        pivot_longer(cols = starts_with("X"), names_to = "ensemble",
+                     names_prefix = "X", values_to = "output") %>% 
+        filter(hour == 12) %>% 
+        group_by(day) %>% 
+        summarise(mean = mean(output, na.rm = TRUE), 
+                  median = median(output, na.rm = TRUE), 
+                  sd = sd(output, na.rm = TRUE), 
+                  lcl_50 = quantile(output, probs = c(0.25), na.rm = TRUE), 
+                  ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
+                  lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
+                  ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
+      
+      write.csv(cue, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_summary_", d, ".csv"),
+                row.names = F)
+    } else if(d == "WUE") {
+      load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                  "/ensemble.ts.NOENSEMBLEID.Transp.2019.2019.Rdata"))
+      transp <- ensemble.ts
+      
+      wue <- data.frame(timescale, t(npp[["NPP"]]/transp[["Transp"]]))%>% 
+        pivot_longer(cols = starts_with("X"), names_to = "ensemble",
+                     names_prefix = "X", values_to = "output") %>% 
+        filter(hour == 12) %>% 
+        group_by(day) %>% 
+        summarise(mean = mean(output, na.rm = TRUE), 
+                  median = median(output, na.rm = TRUE), 
+                  sd = sd(output, na.rm = TRUE), 
+                  lcl_50 = quantile(output, probs = c(0.25), na.rm = TRUE), 
+                  ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
+                  lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
+                  ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
+      
+      write.csv(wue, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_summary_", d, ".csv"),
+                row.names = F)
+    } else if(d == "TET") {
+      load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                  "/ensemble.ts.NOENSEMBLEID.Evap.2019.2019.Rdata"))
+      evap <- ensemble.ts
+      
+      tet <- data.frame(timescale, t(transp[["Transp"]]/evap[["Evap"]]))%>% 
+        pivot_longer(cols = starts_with("X"), names_to = "ensemble",
+                     names_prefix = "X", values_to = "output") %>% 
+        filter(hour == 12) %>% 
+        group_by(day) %>% 
+        summarise(mean = mean(output, na.rm = TRUE), 
+                  median = median(output, na.rm = TRUE), 
+                  sd = sd(output, na.rm = TRUE), 
+                  lcl_50 = quantile(output, probs = c(0.25), na.rm = TRUE), 
+                  ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
+                  lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
+                  ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
+      
+      write.csv(tet, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_summary_", d, ".csv"),
+                row.names = F)
+    }
+    
+    rm(ensemble.ts)
+    gc()
+  }
+}
 
 # Summarize pair-wise differences across treatments, by ensemble
 # hn_rn = high night - regular night, effect of different params and temps
