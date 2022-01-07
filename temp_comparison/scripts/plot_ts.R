@@ -11,22 +11,22 @@ if(!dir.exists(paste0("../plots/"))){
 }
 
 # Organize 3 treatments into same figure
-treatments <- c("rn", "hn")
+treatments <- c("rn", "hn", "hnrn")
+variables <- c("GPP", "NPP", "AutoResp",
+               "TotLivBiom", "AGB", "LAI", 
+               "Evap", "Transp")
 
-biomass_ts <- c()
-trans_ts <- c()
-for (trt in treatments) {
-  data_in <- read.csv(paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
-                             "/ensemble_ts_summary_AGB.csv")) %>%
-    mutate(treatment = trt) %>%
-    relocate(treatment)
-  biomass_ts <- rbind(biomass_ts, data_in)
-  
-  data_in <- read.csv(paste0("/data/output/pecan_runs/temp_comp_results/", trt, 
-                             "/ensemble_ts_summary_TVeg.csv")) %>%
-    mutate(treatment = trt) %>%
-    relocate(treatment)
-  trans_ts <- rbind(trans_ts, data_in)
+ts_list <- list()
+for (v in variables) {
+  ts_df <- c()
+  for(trt in treatments) {
+    data_in <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                               "/ensemble_ts_summary_", v, ".csv")) %>%
+      mutate(treatment = trt) %>%
+      relocate(treatment)
+    ts_df <- rbind(ts_df, data_in)
+  }
+  ts_list[[v]] <- ts_df
 }
 
 # Bring in validation biomass
@@ -54,28 +54,58 @@ biomass_valid <- chamber_biomass %>%
   mutate(agb_kg_m2 = ud.convert((stem_DW_g + leaf_DW_g + panicle_DW_g)/103, "g/cm2", "kg/m2"),
          day = difftime(harvest_date, sowing_date, units = "days")) 
 
-# Plot measured biomass against biomass estimates
+# Plot measured biomass against validation biomass estimates
 fig_biomass_ts <- ggplot() +
-  geom_line(data = biomass_ts, aes(day, y = median, color = treatment)) +
-  geom_ribbon(data = biomass_ts, aes(day, ymin = lcl_50, ymax = ucl_50, fill = treatment), 
+  geom_line(data = ts_list[["AGB"]], aes(day, y = median, color = treatment)) +
+  geom_ribbon(data = ts_list[["AGB"]], aes(day, ymin = lcl_50, ymax = ucl_50, fill = treatment), 
               alpha = 0.25) +
   geom_point(data = biomass_valid, aes(day, y = agb_kg_m2, color = treatment)) +
   scale_x_continuous("Day of experiment") + 
   scale_y_continuous(expression(paste("Abovground biomass (kg ",  m^-2, ")"))) +
   theme_classic()
 
-jpeg(filename = "../plots/biomass_ts.jpg", height = 5, width = 7, units = "in", res = 600)
-print(fig_biomass_ts)
-dev.off()
+ggsave(filename = "biomass_ts.jpg", 
+       plot = fig_biomass_ts, 
+       path = "temp_comparison/plots",
+       height = 5, 
+       width = 7, 
+       units = "in", 
+       dpi = 300)
 
-fig_trans_ts <- ggplot() +
-  geom_line(data = trans_ts, aes(day, y = median, color = treatment)) +
-  geom_ribbon(data = trans_ts, aes(day, ymin = lcl_50, ymax = ucl_50, fill = treatment), 
+### Plot all 8 variables and 3 treatments together
+ts_all <- do.call(rbind, ts_list) %>%
+  mutate(treatment = factor(treatment, levels = treatments),
+         trait = rep(variables, each = 240),
+         trait = factor(trait, levels = variables), 
+         label = case_when(trait == "GPP" ~ "GPP~(kg~C~m^-2~s^-1)",
+                           trait == "NPP" ~ "NPP~(kg~C~m^-2~s^-1)",
+                           trait == "AutoResp" ~ "R[auto]~(kg~C~m^-2~s^-1)",
+                           trait == "TotLivBiom" ~ "TotBiomass~(kg~m^-2)",
+                           trait == "AGB" ~ "AGB~(kg~m^-2)",
+                           trait == "LAI" ~ "LAI~(m^2~m^-2)",
+                           trait == "Evap" ~ "ET~(kg~m^-2~s^-1)",
+                           trait == "Transp" ~ "T~(kg~m^-2~s^-1)"))
+ts_all$label <- factor(ts_all$label, levels = unique(ts_all$label))
+
+fig_all <- ggplot(ts_all) +
+  geom_line(aes(x = day, y = median, color = treatment)) +
+  geom_ribbon(aes(day, ymin = lcl_50, ymax = ucl_50, fill = treatment), 
               alpha = 0.25) +
+  facet_wrap(~label, labeller = label_parsed, ncol = 2,
+             scales = "free_y")+
   scale_x_continuous("Day of Experiment") + 
-  scale_y_continuous(expression(paste("Canopy Transpiration (kg ",  m^-2, " ", day^-1, ")"))) +
-  theme_classic()
+  theme_bw() +
+  theme(strip.background = element_blank())
 
-jpeg(filename = "../plots/trans_ts.jpg", height = 5, width = 7, units = "in", res = 600)
-print(fig_trans_ts)
-dev.off()
+
+ggsave(filename = "all_ts.jpg", 
+       plot = fig_all, 
+       path = "temp_comparison/plots",
+       height = 8, 
+       width = 6, 
+       units = "in", 
+       dpi = 300)
+
+### Plot derived WUE and T/ET  and 3 treatments together
+der_list <- list()
+der_list[["WUE"]] <- ts_list[["NPP"]]
