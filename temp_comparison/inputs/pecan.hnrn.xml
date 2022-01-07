@@ -28,9 +28,7 @@
 
   <ensemble>
     <size>100</size>
-    <variable>GPP</variable>
     <variable>NPP</variable>
-    <variable>AutoResp</variable>
     <variable>TotLivBiom</variable>
     <variable>AGB</variable>
     <variable>LAI</variable>
@@ -52,9 +50,7 @@
   </meta.analysis>
 
   <sensitivity.analysis>
-    <variable>GPP</variable>
     <variable>NPP</variable>
-    <variable>AutoResp</variable>
     <variable>TotLivBiom</variable>
     <variable>AGB</variable>
     <variable>LAI</variable>
