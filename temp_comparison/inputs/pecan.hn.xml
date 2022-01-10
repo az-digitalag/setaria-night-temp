@@ -33,7 +33,7 @@
     <variable>AGB</variable>
     <variable>LAI</variable>
     <variable>Evap</variable>
-    <variable>Transp</variable>
+    <variable>TVeg</variable>
     <samplingspace>
       <parameters>
         <method>halton</method>
@@ -55,7 +55,7 @@
     <variable>AGB</variable>
     <variable>LAI</variable>
     <variable>Evap</variable>
-    <variable>Transp</variable>
+    <variable>TVeg</variable>
   </sensitivity.analysis>
 
   <model>
