@@ -12,9 +12,10 @@ if(!dir.exists(paste0("../plots/"))){
 
 # Organize 3 treatments into same figure
 treatments <- c("rn", "hn", "hnrn")
-variables <- c("GPP", "NPP", "AutoResp",
-               "TotLivBiom", "AGB", "LAI", 
-               "Evap", "Transp")
+variables <- c("NPP", # C flux, kg C /m2/h
+               "Evap", "TVeg",  # flux, kg/m2/h
+               "TotLivBiom", "AGB", # biomass, kg biomass /m2
+               "LAI", "WUE", "TET") # ratios, unitless
 
 ts_list <- list()
 for (v in variables) {
@@ -77,14 +78,14 @@ ts_all <- do.call(rbind, ts_list) %>%
   mutate(treatment = factor(treatment, levels = treatments),
          trait = rep(variables, each = 240),
          trait = factor(trait, levels = variables), 
-         label = case_when(trait == "GPP" ~ "GPP~(kg~C~m^-2~s^-1)",
-                           trait == "NPP" ~ "NPP~(kg~C~m^-2~s^-1)",
-                           trait == "AutoResp" ~ "R[auto]~(kg~C~m^-2~s^-1)",
+         label = case_when(trait == "NPP" ~ "NPP~(kg~C~m^-2~d^-1)",
                            trait == "TotLivBiom" ~ "TotBiomass~(kg~m^-2)",
                            trait == "AGB" ~ "AGB~(kg~m^-2)",
                            trait == "LAI" ~ "LAI~(m^2~m^-2)",
-                           trait == "Evap" ~ "ET~(kg~m^-2~s^-1)",
-                           trait == "Transp" ~ "T~(kg~m^-2~s^-1)"))
+                           trait == "Evap" ~ "ET~(kg~m^-2~d^-1)",
+                           trait == "TVeg" ~ "T~(kg~m^-2~d^-1)",
+                           trait == "WUE" ~ "WUE~(kg~C~kg^-1~H[2]*O)",
+                           trait == "TET" ~ "T:ET"))
 ts_all$label <- factor(ts_all$label, levels = unique(ts_all$label))
 
 fig_all <- ggplot(ts_all) +
@@ -95,7 +96,8 @@ fig_all <- ggplot(ts_all) +
              scales = "free_y")+
   scale_x_continuous("Day of Experiment") + 
   theme_bw() +
-  theme(strip.background = element_blank())
+  theme(strip.background = element_blank(),
+        axis.title.y = element_blank())
 
 
 ggsave(filename = "all_ts.jpg", 
