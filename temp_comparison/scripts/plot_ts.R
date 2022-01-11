@@ -107,7 +107,3 @@ ggsave(filename = "all_ts.jpg",
        width = 6, 
        units = "in", 
        dpi = 300)
-
-### Plot derived WUE and T/ET  and 3 treatments together
-der_list <- list()
-der_list[["WUE"]] <- ts_list[["NPP"]]

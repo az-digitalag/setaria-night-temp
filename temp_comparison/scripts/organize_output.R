@@ -132,10 +132,11 @@ for(trt in treatments){
         group_by(day, ensemble) %>%
         summarise(output = sum(output)) 
       
-      wue <- data.frame(npp, tveg = tveg$output) %>% 
-        mutate(wue = output/tveg) %>%
-        select(-output, -tveg) %>%
-        rename(output = wue) %>%
+      wue <- data.frame(npp, tveg = tveg$output) %>%
+        mutate(output = output/tveg) %>%
+        select(-tveg)
+      
+      wue_sum <- wue %>%
         group_by(day) %>%
         summarise(mean = mean(output, na.rm = TRUE), 
                   median = median(output, na.rm = TRUE), 
@@ -146,6 +147,11 @@ for(trt in treatments){
                   ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
       
       write.csv(wue, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_daily_", d, ".csv"),
+                row.names = F)
+      
+      write.csv(wue_sum, 
                 paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                        "/ensemble_ts_summary_", d, ".csv"),
                 row.names = F)
@@ -162,9 +168,10 @@ for(trt in treatments){
         summarise(output = sum(output)) 
       
       tet <- data.frame(tveg, evap = evap$output) %>% 
-        mutate(tet = output/evap) %>%
-        select(-output, -evap) %>%
-        rename(output = tet) %>%
+        mutate(output = output/evap) %>%
+        select(-evap) 
+      
+      tet_sum <- tet %>%
         group_by(day) %>%
         summarise(mean = mean(output, na.rm = TRUE), 
                   median = median(output, na.rm = TRUE), 
@@ -175,6 +182,11 @@ for(trt in treatments){
                   ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
       
       write.csv(tet, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_daily_", d, ".csv"),
+                row.names = F)
+      
+      write.csv(tet_sum, 
                 paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                        "/ensemble_ts_summary_", d, ".csv"),
                 row.names = F)
@@ -219,11 +231,11 @@ for(v in c(variables, dvars)){
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
   } else if (v %in% c("WUE", "TET")) {
-    rn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble_ts_summary_", v, ".csv"))
+    rn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble_ts_daily_", v, ".csv"))
   }
   rm(ensemble.ts)
   
-    if (v %in% c("TotLivBiom", "AGB", "LAI")) {
+  if (v %in% c("TotLivBiom", "AGB", "LAI")) {
       load(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble.ts.NOENSEMBLEID.", 
                   v, ".2019.2019.Rdata"))
       hn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
@@ -245,10 +257,10 @@ for(v in c(variables, dvars)){
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
   } else if (v %in% c("WUE", "TET")) {
-    hn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble_ts_summary_", v, ".csv"))
+    hn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble_ts_daily_", v, ".csv"))
   }
   
-    if (v %in% c("TotLivBiom", "AGB", "LAI")) {
+  if (v %in% c("TotLivBiom", "AGB", "LAI")) {
       load(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble.ts.NOENSEMBLEID.", 
                   v, ".2019.2019.Rdata"))
     hnrn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
@@ -270,7 +282,7 @@ for(v in c(variables, dvars)){
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
   } else if (v %in% c("WUE", "TET")) {
-    hnrn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble_ts_summary_", v, ".csv"))
+    hnrn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble_ts_daily_", v, ".csv"))
   }
   rm(ensemble.ts)
   
