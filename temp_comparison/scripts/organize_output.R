@@ -97,6 +97,7 @@ for(trt in treatments){
 # Calculate additional derived variables
 # WUE = NPP/TVeg
 # TET = TVeg/Evap
+# Summarize each flux to daily by ensemble, then divide, then take ensemble stats
 
 dvars <- c("WUE", "TET")
 
@@ -113,16 +114,29 @@ for(trt in treatments){
     # Load in wide format of ensemble outputs
       load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                 "/ensemble.ts.NOENSEMBLEID.NPP.2019.2019.Rdata"))
-      npp <- ensemble.ts
+      npp <- data.frame(timescale, t(ensemble.ts[["NPP"]])) %>%
+        pivot_longer(cols = starts_with("X"), names_to = "ensemble",
+                     names_prefix = "X", values_to = "output") %>%
+        mutate(output = convert_units(output, variable = "NPP"),
+               ensemble = as.numeric(ensemble)) %>%
+        group_by(day, ensemble) %>%
+        summarise(output = sum(output)) 
+      
       load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                   "/ensemble.ts.NOENSEMBLEID.TVeg.2019.2019.Rdata"))
-      tveg <- ensemble.ts
-      
-      wue <- data.frame(timescale, t(npp[["NPP"]]/tveg[["TVeg"]]))%>% 
+      tveg <- data.frame(timescale, t(ensemble.ts[["TVeg"]])) %>%
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
-                     names_prefix = "X", values_to = "output") %>% 
-        filter(hour == 12) %>% 
-        group_by(day) %>% 
+                     names_prefix = "X", values_to = "output") %>%
+        mutate(output = convert_units(output, variable = "TVeg"),
+               ensemble = as.numeric(ensemble)) %>%
+        group_by(day, ensemble) %>%
+        summarise(output = sum(output)) 
+      
+      wue <- data.frame(npp, tveg = tveg$output) %>% 
+        mutate(wue = output/tveg) %>%
+        select(-output, -tveg) %>%
+        rename(output = wue) %>%
+        group_by(day) %>%
         summarise(mean = mean(output, na.rm = TRUE), 
                   median = median(output, na.rm = TRUE), 
                   sd = sd(output, na.rm = TRUE), 
@@ -139,13 +153,19 @@ for(trt in treatments){
     } else if(d == "TET") {
       load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                   "/ensemble.ts.NOENSEMBLEID.Evap.2019.2019.Rdata"))
-      evap <- ensemble.ts
-      
-      tet <- data.frame(timescale, t(tveg[["TVeg"]]/evap[["Evap"]]))%>% 
+      evap <- data.frame(timescale, t(ensemble.ts[["Evap"]])) %>%
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
-                     names_prefix = "X", values_to = "output") %>% 
-        filter(hour == 12) %>% 
-        group_by(day) %>% 
+                     names_prefix = "X", values_to = "output") %>%
+        mutate(output = convert_units(output, variable = "Evap"),
+               ensemble = as.numeric(ensemble)) %>%
+        group_by(day, ensemble) %>%
+        summarise(output = sum(output)) 
+      
+      tet <- data.frame(tveg, evap = evap$output) %>% 
+        mutate(tet = output/evap) %>%
+        select(-output, -evap) %>%
+        rename(output = tet) %>%
+        group_by(day) %>%
         summarise(mean = mean(output, na.rm = TRUE), 
                   median = median(output, na.rm = TRUE), 
                   sd = sd(output, na.rm = TRUE), 
