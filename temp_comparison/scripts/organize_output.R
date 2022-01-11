@@ -8,28 +8,30 @@ library(tidyr)
 
 # Summarize (mn, md, sd, CI_50, and CI_95) across ensembles for all 3 treatments
 # And 9 variables
-# 3 C fluxes (GPP, NPP, AutoResp) [kg C m^-2 s^-1]
-# 3 C pools (TotLivBiom, AGB, LAI) [kg C m^-2 or m^2 m^-2]
-# 2 energy/water fluxes (Evap, Transp) [kg m^-2 s^-1]
-# (Evap = ET, so Transp/Evap is E/ET)
+# 1 C fluxes (NPP) [kg C m^-2 s^-1]
+# 2 C pools (TotLivBiom, AGB) [kg C m^-2]
+# 1 ratio (LAI) [m^2 leaf area m^-2 ground area]
+# 2 energy/water fluxes (Evap, TVeg) [kg m^-2 s^-1]
+# (Evap = ET, so TVeg/Evap is E/ET)
 
 
 treatments <- c("rn", "hn", "hnrn")
-variables <- c("GPP", "NPP", "AutoResp",
-               "TotLivBiom", "AGB", "LAI", 
-               "Evap", "Transp")
+variables <- c("NPP", 
+               "TotLivBiom", "AGB", 
+               "LAI", 
+               "Evap", "TVeg")
 
 
 # Functions for conversion of biomass and transpiration units
 convert_units <- function(x, variable) {
-  if(variable %in% c("GPP", "NPP", "AutoResp")) {
+  if(variable %in% c("NPP")) {
     # Convert to kg C /m2/h
     return(ud.convert(x, "kg/m2/s", "kg/m2/h"))
   } else if(variable %in% c("TotLivBiom", "AGB")) {
     # undo biomass to C conversion in PEcAn, kg biomass /m2
     return(x / 0.4)
   } else if(variable %in% c("Evap", 
-                             "Transp")) {
+                             "TVeg")) {
     # Convert to kg/m2/h
     return(ud.convert(x, "kg/m2/s", "kg/m2/h"))
   } else if(variable == "LAI") { # no conversion needed for LAI
@@ -66,8 +68,7 @@ for(trt in treatments){
                   ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
                   lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
                   ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
-    } else if (v %in% c("GPP", "NPP", "AutoResp", 
-                        "Evap", "Transp")) { # Fluxes, take daily sums first
+    } else if (v %in% c("NPP", "Evap", "TVeg")) { # Fluxes, take daily sums first
       daily <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                      names_prefix = "X", values_to = "output") %>%
@@ -94,11 +95,10 @@ for(trt in treatments){
 }
 
 # Calculate additional derived variables
-# CUE = NPP/GPP
-# WUE = NPP/Transp
-# TET = Transp/Evap
+# WUE = NPP/TVeg
+# TET = TVeg/Evap
 
-dvars <- c("CUE", "WUE", "TET")
+dvars <- c("WUE", "TET")
 
 for(trt in treatments){
   
@@ -109,39 +109,16 @@ for(trt in treatments){
   rm(biocro_result)
   
   for(d in dvars){
-    if (d == "CUE")) {
+    if (d == "WUE") {
     # Load in wide format of ensemble outputs
       load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                 "/ensemble.ts.NOENSEMBLEID.NPP.2019.2019.Rdata"))
       npp <- ensemble.ts
-      
       load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
-                  "/ensemble.ts.NOENSEMBLEID.GPP.2019.2019.Rdata"))
-      gpp <- ensemble.ts
+                  "/ensemble.ts.NOENSEMBLEID.TVeg.2019.2019.Rdata"))
+      tveg <- ensemble.ts
       
-      cue <- data.frame(timescale, t(npp[["NPP"]]/gpp[["GPP"]]))%>% 
-        pivot_longer(cols = starts_with("X"), names_to = "ensemble",
-                     names_prefix = "X", values_to = "output") %>% 
-        filter(hour == 12) %>% 
-        group_by(day) %>% 
-        summarise(mean = mean(output, na.rm = TRUE), 
-                  median = median(output, na.rm = TRUE), 
-                  sd = sd(output, na.rm = TRUE), 
-                  lcl_50 = quantile(output, probs = c(0.25), na.rm = TRUE), 
-                  ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
-                  lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
-                  ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
-      
-      write.csv(cue, 
-                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
-                       "/ensemble_ts_summary_", d, ".csv"),
-                row.names = F)
-    } else if(d == "WUE") {
-      load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
-                  "/ensemble.ts.NOENSEMBLEID.Transp.2019.2019.Rdata"))
-      transp <- ensemble.ts
-      
-      wue <- data.frame(timescale, t(npp[["NPP"]]/transp[["Transp"]]))%>% 
+      wue <- data.frame(timescale, t(npp[["NPP"]]/tveg[["TVeg"]]))%>% 
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                      names_prefix = "X", values_to = "output") %>% 
         filter(hour == 12) %>% 
@@ -158,12 +135,13 @@ for(trt in treatments){
                 paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                        "/ensemble_ts_summary_", d, ".csv"),
                 row.names = F)
+      
     } else if(d == "TET") {
       load(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                   "/ensemble.ts.NOENSEMBLEID.Evap.2019.2019.Rdata"))
       evap <- ensemble.ts
       
-      tet <- data.frame(timescale, t(transp[["Transp"]]/evap[["Evap"]]))%>% 
+      tet <- data.frame(timescale, t(tveg[["TVeg"]]/evap[["Evap"]]))%>% 
         pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                      names_prefix = "X", values_to = "output") %>% 
         filter(hour == 12) %>% 
@@ -181,7 +159,6 @@ for(trt in treatments){
                        "/ensemble_ts_summary_", d, ".csv"),
                 row.names = F)
     }
-    
     rm(ensemble.ts)
     gc()
   }
@@ -192,7 +169,7 @@ for(trt in treatments){
 # hnrn_rn = high night control temp - regular night, effect of high temp alone
 # hn_hnrn = high night - high night control temp, effect of high temp params alone
 
-for(v in variables){
+for(v in c(variables, dvars)){
   
   # Load in daily summary of median biocro output, to obtain correct timestamps
   load(paste0("/data/output/pecan_runs/temp_comp_ms/rn/out/SA-median/biocro_output.RData"))
@@ -200,9 +177,9 @@ for(v in variables){
   rm(biocro_result)
   
   # Load all 3 treatments, summarize to daily depending on variable
-  load(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble.ts.NOENSEMBLEID.", 
-              v, ".2019.2019.Rdata"))
   if (v %in% c("TotLivBiom", "AGB", "LAI")) {
+    load(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble.ts.NOENSEMBLEID.", 
+                v, ".2019.2019.Rdata"))
     rn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
       pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                    names_prefix = "X", values_to = "output") %>% 
@@ -211,8 +188,9 @@ for(v in variables){
       filter(hour == 12) %>% 
       group_by(day, ensemble) %>%
       dplyr::select(-hour)
-  } else if (v %in% c("GPP", "NPP", "AutoResp", 
-                      "Evap", "Transp")) {
+  } else if (v %in% c("NPP", "Evap", "TVeg")) {
+    load(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble.ts.NOENSEMBLEID.", 
+                v, ".2019.2019.Rdata"))
     rn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
       pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                    names_prefix = "X", values_to = "output") %>%
@@ -220,13 +198,15 @@ for(v in variables){
              ensemble = as.numeric(ensemble)) %>%
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
+  } else if (v %in% c("WUE", "TET")) {
+    rn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble_ts_summary_", v, ".csv"))
   }
   rm(ensemble.ts)
   
-  load(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble.ts.NOENSEMBLEID.", 
-              v, ".2019.2019.Rdata"))
-  if (v %in% c("TotLivBiom", "AGB", "LAI")) {
-    hn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
+    if (v %in% c("TotLivBiom", "AGB", "LAI")) {
+      load(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble.ts.NOENSEMBLEID.", 
+                  v, ".2019.2019.Rdata"))
+      hn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
       pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                    names_prefix = "X", values_to = "output") %>% 
       mutate(output = convert_units(output, variable = v),
@@ -234,8 +214,9 @@ for(v in variables){
       filter(hour == 12) %>% 
       group_by(day, ensemble)%>%
       dplyr::select(-hour)
-  } else if (v %in% c("GPP", "NPP", "AutoResp", 
-                      "Evap", "Transp")) {
+  } else if (v %in% c("NPP", "Evap", "TVeg")) {
+    load(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble.ts.NOENSEMBLEID.", 
+                v, ".2019.2019.Rdata"))
     hn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
       pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                    names_prefix = "X", values_to = "output") %>%
@@ -243,11 +224,13 @@ for(v in variables){
              ensemble = as.numeric(ensemble)) %>%
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
+  } else if (v %in% c("WUE", "TET")) {
+    hn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble_ts_summary_", v, ".csv"))
   }
   
-  load(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble.ts.NOENSEMBLEID.", 
-              v, ".2019.2019.Rdata"))
-  if (v %in% c("TotLivBiom", "AGB", "LAI")) {
+    if (v %in% c("TotLivBiom", "AGB", "LAI")) {
+      load(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble.ts.NOENSEMBLEID.", 
+                  v, ".2019.2019.Rdata"))
     hnrn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
       pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                    names_prefix = "X", values_to = "output") %>% 
@@ -256,8 +239,9 @@ for(v in variables){
       filter(hour == 12) %>% 
       group_by(day, ensemble) %>%
       dplyr::select(-hour)
-  } else if (v %in% c("GPP", "NPP", "AutoResp", 
-                      "Evap", "Transp")) {
+  } else if (v %in% c("NPP", "Evap", "TVeg")) {
+    load(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble.ts.NOENSEMBLEID.", 
+                v, ".2019.2019.Rdata"))
     hnrn <- data.frame(timescale, t(ensemble.ts[[v]])) %>%
       pivot_longer(cols = starts_with("X"), names_to = "ensemble",
                    names_prefix = "X", values_to = "output") %>%
@@ -265,6 +249,8 @@ for(v in variables){
              ensemble = as.numeric(ensemble)) %>%
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
+  } else if (v %in% c("WUE", "TET")) {
+    hnrn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble_ts_summary_", v, ".csv"))
   }
   rm(ensemble.ts)
   
