@@ -23,7 +23,7 @@ for (v in variables) {
   for(trt in treatments) {
     data_in <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                                "/ensemble_ts_summary_", v, ".csv")) %>%
-      mutate(treatment = trt) %>%
+      mutate(treatment = factor(trt, levels = c("rn", "hnrn", "hn"))) %>%
       relocate(treatment)
     ts_df <- rbind(ts_df, data_in)
   }
@@ -61,15 +61,20 @@ fig_biomass_ts <- ggplot() +
   geom_ribbon(data = ts_list[["AGB"]], aes(day, ymin = lcl_50, ymax = ucl_50, fill = treatment), 
               alpha = 0.25) +
   geom_point(data = biomass_valid, aes(day, y = agb_kg_m2, color = treatment)) +
-  scale_x_continuous("Day of experiment") + 
+  scale_color_manual(values = c("cornflowerblue", 
+                                "burlywood", 
+                                "coral")) +
+  scale_fill_manual(values = c("cornflowerblue", 
+                               "burlywood", 
+                               "coral")) +scale_x_continuous("Day of experiment") + 
   scale_y_continuous(expression(paste("Abovground biomass (kg ",  m^-2, ")"))) +
   theme_classic()
 
 ggsave(filename = "biomass_ts.jpg", 
        plot = fig_biomass_ts, 
        path = "temp_comparison/plots",
-       height = 5, 
-       width = 7, 
+       height = 4, 
+       width = 5, 
        units = "in", 
        dpi = 300)
 
@@ -87,23 +92,36 @@ ts_all <- do.call(rbind, ts_list) %>%
                            trait == "WUE" ~ "WUE~(kg~C~kg^-1~H[2]*O)",
                            trait == "TET" ~ "T:ET"))
 ts_all$label <- factor(ts_all$label, levels = unique(ts_all$label))
+ts_all$treatment <- factor(ts_all$treatment, levels = c("rn",
+                                                        "hnrn",
+                                                        "hn"))
 
 fig_all <- ggplot(ts_all) +
   geom_line(aes(x = day, y = median, color = treatment)) +
   geom_ribbon(aes(day, ymin = lcl_50, ymax = ucl_50, fill = treatment), 
               alpha = 0.25) +
-  facet_wrap(~label, labeller = label_parsed, ncol = 2,
-             scales = "free_y")+
+  facet_grid(rows = vars(trait), 
+             cols = vars(treatment),
+             labeller = label_parsed,
+             scales = "free_y",
+             switch = "y") +
+  scale_color_manual(values = c("cornflowerblue", 
+                                "burlywood", 
+                                "coral")) +
+  scale_fill_manual(values = c("cornflowerblue", 
+                                "burlywood", 
+                                "coral")) +
   scale_x_continuous("Day of Experiment") + 
   theme_bw() +
   theme(strip.background = element_blank(),
-        axis.title.y = element_blank())
+        axis.title.y = element_blank(),
+        strip.placement = "outside")
 
 
 ggsave(filename = "all_ts.jpg", 
        plot = fig_all, 
        path = "temp_comparison/plots",
-       height = 8, 
+       height = 6, 
        width = 6, 
        units = "in", 
        dpi = 300)
