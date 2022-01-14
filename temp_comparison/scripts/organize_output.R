@@ -99,7 +99,7 @@ for(trt in treatments){
 # TET = TVeg/Evap
 # Summarize each flux to daily by ensemble, then divide, then take ensemble stats
 
-dvars <- c("WUE", "TET")
+dvars <- c("WUE", "TET", "E")
 
 for(trt in treatments){
   
@@ -190,6 +190,31 @@ for(trt in treatments){
                 paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
                        "/ensemble_ts_summary_", d, ".csv"),
                 row.names = F)
+    } else if(d == "E") {
+      
+        e_only <- data.frame(tveg, evap = evap$output) %>% 
+        mutate(output = evap - output) %>%
+        select(-evap) 
+      
+        e_sum <- e_only %>%
+        group_by(day) %>%
+        summarise(mean = mean(output, na.rm = TRUE), 
+                  median = median(output, na.rm = TRUE), 
+                  sd = sd(output, na.rm = TRUE), 
+                  lcl_50 = quantile(output, probs = c(0.25), na.rm = TRUE), 
+                  ucl_50 = quantile(output, probs = c(0.75), na.rm = TRUE),
+                  lcl_95 = quantile(output, probs = c(0.025), na.rm = TRUE), 
+                  ucl_95 = quantile(output, probs = c(0.975), na.rm = TRUE))
+      
+      write.csv(e_only, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_daily_", d, ".csv"),
+                row.names = F)
+      
+      write.csv(e_sum, 
+                paste0("/data/output/pecan_runs/temp_comp_ms/", trt, 
+                       "/ensemble_ts_summary_", d, ".csv"),
+                row.names = F)
     }
     rm(ensemble.ts)
     gc()
@@ -230,7 +255,7 @@ for(v in c(variables, dvars)){
              ensemble = as.numeric(ensemble)) %>%
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
-  } else if (v %in% c("WUE", "TET")) {
+  } else if (v %in% c("WUE", "TET", "E")) {
     rn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/rn/ensemble_ts_daily_", v, ".csv"))
   }
   rm(ensemble.ts)
@@ -256,7 +281,7 @@ for(v in c(variables, dvars)){
              ensemble = as.numeric(ensemble)) %>%
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
-  } else if (v %in% c("WUE", "TET")) {
+  } else if (v %in% c("WUE", "TET", "E")) {
     hn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hn/ensemble_ts_daily_", v, ".csv"))
   }
   
@@ -281,7 +306,7 @@ for(v in c(variables, dvars)){
              ensemble = as.numeric(ensemble)) %>%
       group_by(day, ensemble) %>%
       summarise(output = sum(output))
-  } else if (v %in% c("WUE", "TET")) {
+  } else if (v %in% c("WUE", "TET", "E")) {
     hnrn <- read.csv(paste0("/data/output/pecan_runs/temp_comp_ms/hnrn/ensemble_ts_daily_", v, ".csv"))
   }
   rm(ensemble.ts)
