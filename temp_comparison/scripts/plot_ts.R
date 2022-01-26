@@ -13,7 +13,7 @@ if(!dir.exists(paste0("../plots/"))){
 # Organize 3 treatments into same figure
 treatments <- c("rn", "hn", "hnrn")
 variables <- c("NPP", # C flux, kg C /m2/h
-               "Evap", "TVeg",  # flux, kg/m2/h
+               "TVeg", "E",  # flux, kg/m2/h
                "TotLivBiom", "AGB", # biomass, kg biomass /m2
                "LAI", "WUE", "TET") # ratios, unitless
 
@@ -87,7 +87,7 @@ ts_all <- do.call(rbind, ts_list) %>%
                            trait == "TotLivBiom" ~ "TotBiomass~(kg~m^-2)",
                            trait == "AGB" ~ "AGB~(kg~m^-2)",
                            trait == "LAI" ~ "LAI~(m^2~m^-2)",
-                           trait == "Evap" ~ "ET~(kg~m^-2~d^-1)",
+                           trait == "E" ~ "E~(kg~m^-2~d^-1)",
                            trait == "TVeg" ~ "T~(kg~m^-2~d^-1)",
                            trait == "WUE" ~ "WUE~(kg~C~kg^-1~H[2]*O)",
                            trait == "TET" ~ "T:ET"))

@@ -11,7 +11,7 @@ if(!dir.exists(paste0("../plots/"))){
 }
 
 variables <- c("NPP", # C flux, kg C /m2/h
-               "Evap", "TVeg",  # flux, kg/m2/h
+               "TVeg", "E",  # flux, kg/m2/h
                "TotLivBiom", "AGB", # biomass, kg biomass /m2
                "LAI", "WUE", "TET") # ratios, unitless
 
@@ -42,17 +42,18 @@ diff_df <- do.call(rbind.data.frame, diff_list) %>%
                            trait == "TotLivBiom" ~ "Delta*TotBiomass",
                            trait == "AGB" ~ "Delta*AGB",
                            trait == "LAI" ~ "Delta*LAI",
-                           trait == "Evap" ~ "Delta*ET",
+                           trait == "E" ~ "Delta*E",
                            trait == "TVeg" ~ "Delta*T",
                            trait == "WUE" ~ "Delta*WUE",
                            trait == "TET" ~ "Delta*T:ET"),
-         type = case_when(diff == "hn_hnrn" ~ "Trait~effect",
+         type = case_when(diff == "hn_hnrn" ~ "Adaptation~effect",
                           diff == "hnrn_rn" ~ "Temp~effect",
                           diff == "hn_rn" ~ "Combined~effect"))
 diff_df$label <- factor(diff_df$label, levels = unique(diff_df$label))
 diff_df$type <- factor(diff_df$type, levels = c("Temp~effect", 
-                                                "Trait~effect", 
+                                                "Adaptation~effect", 
                                                 "Combined~effect"))
+diff_df$diff <- factor(diff_df$diff, levels = c("hnrn_rn", "hn_hnrn", "hn_rn"))
 # Plot panel of figures
 fig_diff <- ggplot(diff_df, aes(x = day)) +
   geom_hline(yintercept = 0) +
@@ -65,18 +66,22 @@ fig_diff <- ggplot(diff_df, aes(x = day)) +
              scales = "free_y",
              switch = "y") +
   scale_x_continuous("Day of Experiment") + 
-  scale_color_manual(values = c("blue", "darkorchid", "red")) +
-  scale_fill_manual(values = c("blue", "darkorchid", "red")) +
-  theme_bw() +
+  scale_color_manual(values = c("red", "blue", "darkorchid"), 
+                     labels = c("hnrn - rn", "hn - hnrn", "hn - rn")) +
+  scale_fill_manual(values = c("red", "blue", "darkorchid"), 
+                    labels = c("hnrn - rn", "hn - hnrn", "hn - rn")) +
+  theme_bw(base_size = 8) +
   theme(strip.background = element_blank(),
         axis.title.y = element_blank(),
-        strip.placement = "outside")
+        strip.placement = "outside",
+        legend.title = element_blank())
 fig_diff
 
 ggsave(filename = "all_diff.jpg", 
        plot = fig_diff, 
        path = "temp_comparison/plots",
-       height = 8, 
+       height = 6, 
        width = 6, 
        units = "in", 
        dpi = 300)
+
